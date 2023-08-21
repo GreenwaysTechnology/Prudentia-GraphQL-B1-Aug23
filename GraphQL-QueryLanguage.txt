@@ -373,5 +373,231 @@ Response:
 ]
 }
 .....................................................................................
+				Arguments
+.....................................................................................
+What if i want to get data based on some condition or conditions.
+
+Syntax:
+
+query {
+  user(id:"100") {
+     name
+     status
+  }
+
+}
+Here we query data for user having id 100.
+Arguments can be static or dynamic
+Args can be hardcoded value or dynamic values
+
+Static values
+
+query {
+  country(code: "US") {
+    name
+  }
+}
+
+Response:
+{
+  "data": {
+    "country": {
+      "name": "United States"
+    }
+  }
+}
+...................................................................................
+			 Dynamic Parameters/Args
+....................................................................................
+
+Variables:
+ Variables are place holders to have dynamic values.
+ Incase of client apps(Mobile app,browser apps(react,vue,angular), you may select from dropdwon, or text field, or radio and checkbox.
+
+Variables are introduced in Graphqql via "$variableName"
+
+Steps:
+ 1.replace static values in the query with $variableName
+ 2.Declare the variable ($VariableName) as part of the query header.
+
+
+Syntax:
+
+ query queryHeader($variableName:DataType) {
+	api(variable:$variableName) { 
+	  fields
+        }
+ }
+
+eg:
+query getCountryById($code:ID!) {
+  country(code: $code) {
+    name
+  }
+}
+
+Passing variables via Query variables in PlayGround
+{
+  "code": "US"
+}
+Response:
+{
+  "data": {
+    "country": {
+      "name": "United States"
+    }
+  }
+}
+
+Parameter/arg types:
+...................
+1.can be primtives(scalar types)-ID,String,Int,Float....
+2.can be complex Types - Object types,Enums,Collections,Input
+
+Complex Types:
+Input ===DTO ===Models
+
+Complex types
+
+eg:
+query getLanguageInfo($filter: LanguageFilterInput) {
+  languages(filter: $filter) {
+    code
+    name
+    native
+    rtl
+  }
+}
+
+Input:
+{
+  "filter": {
+    "code": {
+      "eq": "en" 
+    }
+  }
+}
+Response:
+{
+  "data": {
+    "languages": [
+      {
+        "code": "en",
+        "name": "English",
+        "native": "English",
+        "rtl": false
+      }
+    ]
+  }
+}
+
+.....................................................................................
+			Argument Default Values
+....................................................................................
+
+Some times if we dont want to pass values to the api explicitly..
+
+Syntax:
+.......
+
+query getProfile($id:Int){
+    user(id:$id) {
+      name
+      pic
+    }
+  }
+}
+
+How to pass variable 
+{"id" : 5 }
+{"id" : 6 }
+
+Variable default Value
+
+query getProfile($id:Int=2){
+    user(id:$id){
+      name
+      pic
+    }
+  }
+}
+more variables
+query getProfile($id:Int,$withFriends:Boolean=false){
+    user(id:$id,withFriends:$withFriends) {
+      name
+      pic  
+    }
+  }
+}
+{"id" : 5 ,"withFriends":true}
+{"id" : 5}
+
+eg:
+
+query getCountryByCode($code: ID = "US") {
+  country(code: $code) {
+    code
+    name
+    native
+    phone
+    continent {
+      code
+      name
+    }
+    capital
+   
+  }
+}
+
+
+Variables:
+with parameters
+{
+  "code": "IN"
+}
+
+Response:
+{
+  "data": {
+    "country": {
+      "code": "IN",
+      "name": "India",
+      "native": "भारत",
+      "phone": "91",
+      "continent": {
+        "code": "AS",
+        "name": "Asia"
+      },
+      "capital": "New Delhi"
+    }
+  }
+}
+without parameters
+
+Response:
+{
+  "data": {
+    "country": {
+      "code": "US",
+      "name": "United States",
+      "native": "United States",
+      "phone": "1",
+      "continent": {
+        "code": "NA",
+        "name": "North America"
+      },
+      "capital": "Washington D.C."
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
 
 
