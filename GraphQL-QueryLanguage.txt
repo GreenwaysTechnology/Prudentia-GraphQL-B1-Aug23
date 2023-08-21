@@ -261,48 +261,117 @@ Are properties of an object.
 
 eg:
 
+
+eg:
+
 query {
-  countries {
-    name
-    capital
-    languages {
-      name
-    }
+   countries {
+     name
   }
 }
+
+short cut:
+{
+   countries {
+     name
+  }
+}
+
 Response:
 {
   "data": {
     "countries": [
       {
-        "name": "Andorra",
-        "capital": "Andorra la Vella",
-        "languages": [
-          {
-            "name": "Catalan"
-          }
-        ]
+        "name": "Andorra"
       },
       {
-        "name": "United Arab Emirates",
-        "capital": "Abu Dhabi",
-        "languages": [
-          {
-            "name": "Arabic"
-          }
-        ]
+        "name": "United Arab Emirates"
+      },
+      {
+        "name": "Afghanistan"
       }
+}
+...
+More fields:
+ How do we know that the api has more fields?
+ In the playground , we can see docs.by looking docs we can come to know the fields
+
+{
+  countries {
+    code
+    name
+    native
+    capital
+    currency
+  }
+}
+
+Response
+{
+  "data": {
+    "countries": [
+      {
+        "code": "AD",
+        "name": "Andorra",
+        "native": "Andorra",
+        "capital": "Andorra la Vella",
+        "currency": "EUR"
+      },
+      {
+        "code": "AE",
+        "name": "United Arab Emirates",
+        "native": "دولة الإمارات العربية المتحدة",
+        "capital": "Abu Dhabi",
+        "currency": "AED"
+      },
+}
+...
+
+How to query nested values?
+
+query getAllCountries {
+  countries {
+    code
+    name
+    capital
+    continent {
+      name
+    }
+    states {
+      name
+    }
+  }
+}
+
+
+Response:
+
+{
+  "data": {
+    "countries": [
+      {
+        "code": "AD",
+        "name": "Andorra",
+        "native": "Andorra",
+        "capital": "Andorra la Vella",
+        "currency": "EUR",
+        "states": []
+      },
+  "states": [
+          {
+            "name": "Ciudad Autónoma de Buenos Aires"
+          },
+          {
+            "name": "Buenos Aires"
+          },
+          {
+            "name": "Catamarca"
+          },
+          {
+            "name": "Chaco"
+          }
 ]
-
-
-
-
-
-
-
-
-
-
-
+}
+.....................................................................................
 
 
