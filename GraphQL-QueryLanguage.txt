@@ -590,14 +590,233 @@ Response:
     }
   }
 }
+.....................................................................................
+			 Aliases
+.....................................................................................
+
+Field aliases gives dummy name for keys.
+
+without aliases
 
 
+{ 
+
+ user(id:1) {
+    id
+    name
+ }
+
+}
+
+response:
+{
+  "data": {
+    "user" : {
+      "id" :1
+      "name": "Subramaian"
+    }
+  }
+}
+
+With aliase:
+{ 
+
+ subu:user(id:1) {
+    id
+    name
+ }
+
+}
+eg:
+query ($abc: LanguageFilterInput) {
+  mylanguage: languages(filter: $abc) {
+    mycode: code
+    mylanguage: name
+    native
+    rtl
+  }
+}
+input variable
+{
+  "abc": {
+    "code": {
+      "eq": "en"
+    }
+  }
+}
+
+Response:
+{
+  "data": {
+    "mylanguage": [
+      {
+        "mycode": "en",
+        "mylanguage": "English",
+        "native": "English",
+        "rtl": false
+      }
+    ]
+  }
+}
+................................................................................
+			 Fragments : Reusable Selection Set
+.................................................................................
+
+What if i have some fields , duplicated in many query apis , where fragments are used.
+
+Sytnax:
+Without Fragment:
+.................
+
+{
+ user(id:4) {
+
+  friends {
+    id
+    name
+    pic
+  }
+  mutualfriends {
+    id
+    name
+    pic
+  }
+ }
+
+}
+
+With Fragement:
+
+{
+  user(id:4) {
+
+  friends {
+    ...friendsFields
+    extra fields
+  }
+  mutualfriends {
+   ...friendsFields
+  }
+ }
+
+}
+fragement friendsFields on User {
+  id
+  name
+  pic
+}
+
+eg:
+query getCountries {
+  countries1: countries {
+    ...countryInfo
+  }
+  countries2: countries {
+    ...countryInfo
+  }
+}
+fragment countryInfo on Country {
+  name
+  capital
+}
+Response:
+Response:
+{
+  "data": {
+    "a1countries": [
+      {
+        "name": "Andorra",
+        "capital": "Andorra la Vella"
+      },
+      {
+        "name": "United Arab Emirates",
+        "capital": "Abu Dhabi"
+      },
+"a2countries": [
+      {
+        "name": "Andorra",
+        "capital": "Andorra la Vella"
+      },
+      {
+        "name": "United Arab Emirates",
+        "capital": "Abu Dhabi"
+      }
+}
+..
 
 
+Directives are built in functions which provides some utilties
+
+@include(if:Boolean)
+  Only include  "this field" in the result if the argument is true
+@skip(if:Boolean)
+  Skip this field if the argument is true
+
+Syntax:
+{
+  getProfile($id:Int,$withFriends:Boolean=false){
+    user {
+      name
+      pic  
+      friends @include(if:$withFriends)   {
+	name
+      }
+    }
+  }
+}
 
 
+{"id" : 5 ,"withFriends":true}
 
+eg:
+query getLangugage($code: ID!, $rtl: Boolean!) {
+  language(code: $code) {
+    name
+    native @include(if: $rtl)
+  }
+}
 
+{
+  "code": "en" ,"rtl": true
+}
 
+Response:
+{
+  "data": {
+    "language": {
+      "name": "English",
+      "native": "English"
+    }
+  }
+}
+....................................................................................
+				Meta Fields
 
+..................................................................................
 
+Apart from , fields returned by GraphQl server, some built in fields called meta fields are also returned by server.
+
+__typename : Returns the data Type of Object returned
+
+query {
+  countries {
+    __typename
+    name,
+    states
+    {
+      __typename
+      name
+    }
+  }
+}
+Response:
+{
+  "data": {
+    "countries": [
+      {
+        "__typename": "Country",
+        "name": "Andorra",
+        "states": []
+      },
+}
+..
