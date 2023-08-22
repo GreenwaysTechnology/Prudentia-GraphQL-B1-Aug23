@@ -819,4 +819,68 @@ Response:
         "states": []
       },
 }
-..
+.....................................................................................
+		....................................................................................
+				Mutations
+...................................................................................
+
+How to send payload to create,update,delete
+IN REST
+
+POST=>CREATE
+PUT=>UPDATE
+DELETE=>REMOVE
+GET=>READ
+
+Mutations 
+........
+
+mutation is keyword used to create,update,remove...
+
+API url :
+https://graphqlzero.almansi.me/api
+
+CREATE:
+.......
+eg:
+mutation CreatePost(
+  $input: CreatePostInput!
+) {
+  createPost(input: $input) {
+    id
+    title
+    body
+  }
+}
+
+Query Variables:
+{
+  "input": {
+    "title": "A Very Captivating Post Title",
+    "body": "Some interesting content."
+  }
+}
+
+Response:
+
+{
+    "data": {
+        "createPost": {
+            "id": "101",
+            "title": "A Very Captivating Post Title",
+            "body": "Some interesting content."
+        }
+    }
+}
+You have to write update post and delete post.		
+
+
+
+
+
+
+
+
+
+
+
