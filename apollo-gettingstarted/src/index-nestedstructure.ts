@@ -1,42 +1,6 @@
 import { ApolloServer } from "@apollo/server"
 import { startStandaloneServer } from '@apollo/server/standalone'
 
-//mock data:
-const USERS = [{
-    id: 1,
-    name: 'A',
-    email: 'a@gmail.com'
-},
-{
-    id: 2,
-    name: 'B',
-    email: 'b@gmail.com'
-},
-{
-    id: 3,
-    name: 'C',
-    email: 'c@gmail.com'
-}
-]
-const ADDRESS = [{
-    city: 'CBE',
-    state: 'TN',
-    id: 1, //linking field  looks like foreign key
-},
-{
-    city: 'BNG',
-    state: 'KA',
-    id: 2, //linking field  looks like foreign key
-},
-{
-    city: 'HYD',
-    state: 'TS',
-    id: 1, //linking field  looks like foreign key
-}
-]
-
-
-
 
 //define schema
 const typeDefs = `
@@ -47,12 +11,16 @@ type Address {
 
 type User {
  id:ID
- name:String
- email:String
+ firstName:String
+ lastName:String
+ age:Int
+ points:Float
  address:Address
+ status:Boolean
 }
 
 type Query {
+  user:User
   users:[User]
 }
 `
@@ -61,9 +29,20 @@ type Query {
 const resolvers = {
     //Query
     Query: {
-        users() {
-            return USERS
+        user() {
+            return {
+                id: 1,
+                firstName: "Subramanian",
+                lastName: "Murugan",
+                age: 10,
+                points: 10,
+                address: {
+                    city: 'Coimbatore'
+                },
+                status: true
+            }
         }
+
     }
     //Mutation
     //Subscription

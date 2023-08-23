@@ -1069,6 +1069,232 @@ Use Case:
 
  I have collection called users.
  write api to filter data based on UserId
+.....................................................................................
+			Nested Type
+.....................................................................................
+
+User has Address
+
+import { ApolloServer } from "@apollo/server"
+import { startStandaloneServer } from '@apollo/server/standalone'
+
+
+//define schema
+const typeDefs = `
+
+type Address {
+  city:String
+}
+
+type User {
+ id:ID
+ firstName:String
+ lastName:String
+ age:Int
+ points:Float
+ address:Address
+ status:Boolean
+}
+
+type Query {
+  user:User
+  users:[User]
+}
+`
+
+//define resolver
+const resolvers = {
+    //Query
+    Query: {
+        user() {
+            return {
+                id: 1,
+                firstName: "Subramanian",
+                lastName: "Murugan",
+                age: 10,
+                points: 10,
+                address: {
+                    city: 'Coimbatore'
+                },
+                status: true
+            }
+        }
+
+    }
+    //Mutation
+    //Subscription
+}
+
+//deployment : parsing ,binding
+const server = new ApolloServer({ typeDefs: typeDefs, resolvers: resolvers })
+
+//start web container
+const { url } = await startStandaloneServer(server, {
+    listen: {
+        port: 4000
+    }
+})
+console.log(`Apollo Server is ready ${url}`)
+
+Client:
+query User {
+  user {
+    id
+    address {
+      city
+    }
+  }
+}
+{
+  "data": {
+    "user": {
+      "id": "1",
+      "address": {
+        "city": "Coimbatore"
+      }
+    }
+  }
+}
+....................................................................................
+			How to coimbine multiple datasets and query?
+
+I have users Array
+I have address Array
+
+I have to connect users with address.
+
+
+import { ApolloServer } from "@apollo/server"
+import { startStandaloneServer } from '@apollo/server/standalone'
+
+//mock data:
+const USERS = [{
+    id: 1,
+    name: 'A',
+    email: 'a@gmail.com'
+},
+{
+    id: 2,
+    name: 'B',
+    email: 'b@gmail.com'
+},
+{
+    id: 3,
+    name: 'C',
+    email: 'c@gmail.com'
+}
+]
+const ADDRESS = [{
+    city: 'CBE',
+    state: 'TN',
+    id: 1, //linking field  looks like foreign key
+},
+{
+    city: 'BNG',
+    state: 'KA',
+    id: 2, //linking field  looks like foreign key
+},
+{
+    city: 'HYD',
+    state: 'TS',
+    id: 1, //linking field  looks like foreign key
+}
+]
+
+
+
+
+//define schema
+const typeDefs = `
+
+type Address {
+  city:String
+}
+
+type User {
+ id:ID
+ name:String
+ email:String
+ address:Address
+}
+
+type Query {
+  users:[User]
+}
+`
+
+//define resolver
+const resolvers = {
+    //Query
+    Query: {
+        users() {
+            return USERS
+        }
+    }
+    //Mutation
+    //Subscription
+}
+
+//deployment : parsing ,binding
+const server = new ApolloServer({ typeDefs: typeDefs, resolvers: resolvers })
+
+//start web container
+const { url } = await startStandaloneServer(server, {
+    listen: {
+        port: 4000
+    }
+})
+console.log(`Apollo Server is ready ${url}`)
+
+Client side:
+query Users {
+  users {
+    id
+    name
+    email
+    address {
+      city
+    }
+  }
+}
+
+{
+  "data": {
+    "users": [
+      {
+        "id": "1",
+        "name": "A",
+        "email": "a@gmail.com",
+        "address": null
+      },
+      {
+        "id": "2",
+        "name": "B",
+        "email": "b@gmail.com",
+        "address": null
+      },
+      {
+        "id": "3",
+        "name": "C",
+        "email": "c@gmail.com",
+        "address": null
+      }
+    ]
+  }
+}
+
+Here we get null value in the address, because the data set is not linked .
+....................................................................................
+			  Resolver Chains
+....................................................................................
+Resolver chain means coimbin results of one resolver with in nested resolver.
+
+
+
+
+
+
+
 
 
 
