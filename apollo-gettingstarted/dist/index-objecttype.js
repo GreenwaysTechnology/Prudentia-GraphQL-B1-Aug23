@@ -13,7 +13,6 @@ type User {
 
 type Query {
   user:User
-  users:[User]
 }
 `;
 //define resolver
@@ -29,34 +28,6 @@ const resolvers = {
                 points: 10,
                 status: true
             };
-        },
-        users() {
-            return [
-                {
-                    id: 1,
-                    firstName: "Subramanian",
-                    lastName: "Murugan",
-                    age: 10,
-                    points: 10,
-                    status: true
-                },
-                {
-                    id: 2,
-                    firstName: "Geetha",
-                    lastName: "Subramanian",
-                    age: 10,
-                    points: 34,
-                    status: true
-                },
-                {
-                    id: 3,
-                    firstName: "Shirisha",
-                    lastName: "Subramanian",
-                    age: 10,
-                    points: 800,
-                    status: true
-                }
-            ];
         }
     }
     //Mutation
