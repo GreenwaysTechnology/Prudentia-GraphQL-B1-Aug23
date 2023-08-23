@@ -992,10 +992,83 @@ Response:
 ....................................................................................
 			  Handle Args and Params
 ....................................................................................
+How to handle args and parameters?
+  A resolver function takes four postional args optional args
+
+Syntax:
+  function resolver(parent,args,contextValue,info){
+
+  } 
+ 
+args which is variable going to hold parametes passed by clients
+args value is going to be literal object
+If you pass more no of parameters, all parameters are passed  and stored into one single object.
 
 
+import { ApolloServer } from "@apollo/server"
+import { startStandaloneServer } from '@apollo/server/standalone'
 
 
+//define schema
+const typeDefs = `
+type Query {
+    hello(name:String):String
+}
+`
+
+//define resolver
+const resolvers = {
+    //Query
+    Query: {
+        hello(parent, args, contextValue, info): string {
+            return `Hello ${args.name}`
+        }
+    }
+
+}
+
+//deployment : parsing ,binding
+const server = new ApolloServer({ typeDefs: typeDefs, resolvers: resolvers })
+
+//start web container
+const { url } = await startStandaloneServer(server, {
+    listen: {
+        port: 4000
+    }
+})
+console.log(`Apollo Server is ready ${url}`)
+
+Client:
+Static Parameter
+query getHello {
+  hello(name: "Subramanian")
+}
+{
+  "data": {
+    "hello": "Hello Subramanian"
+  }
+}
+Dynamic Parameter:
+..................
+query getHello($name:String) {
+  hello(name: $name)
+}
+
+variable:
+{
+  "name": "Murugan"
+}
+response:
+{
+  "data": {
+    "hello": "Hello Murugan"
+  }
+}
+....................................................................................
+Use Case:
+
+ I have collection called users.
+ write api to filter data based on UserId
 
 
 
