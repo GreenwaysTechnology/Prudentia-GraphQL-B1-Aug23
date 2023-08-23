@@ -19,75 +19,46 @@ const USERS = [{
     email: 'c@gmail.com'
 }
 ]
-const ADDRESS = [{
-    city: 'CBE',
-    state: 'TN',
-    id: 1, //linking field  looks like foreign key
-},
-{
-    city: 'BNG',
-    state: 'KA',
-    id: 1, //linking field  looks like foreign key
-},
-{
-    city: 'BNG',
-    state: 'KA',
-    id: 2, //linking field  looks like foreign key
-},
-{
-    city: 'CBE',
-    state: 'TN',
-    id: 2, //linking field  looks like foreign key
-},
-{
-    city: 'HYD',
-    state: 'TS',
-    id: 3, //linking field  looks like foreign key
-},
-{
-    city: 'DEL',
-    state: 'HR',
-    id: 3, //linking field  looks like foreign key
-}
-]
 
 //define schema
 const typeDefs = `
-type Address {
-  city:String
-}
 
 type User {
  id:ID
  name:String
  email:String
- address:[Address]
 }
 
 type Query {
   users:[User]
 }
+
+input CreateUserInput{
+  id:ID
+  name:String
+  email:String
+}
+
+type Mutation{
+    createUser(userInput:CreateUserInput):User
+}
+
 `
 
 //define resolver
 const resolvers = {
-    //Query
     Query: {
         users() {
-            return USERS
+            return USERS;
         }
     },
-    //Resolver Chain
-    User: {
-        address(parent, args, contextValue, info) {
-            console.log(parent)
-            return ADDRESS.filter(address => {
-                return address.id === parent.id
-            })
+    Mutation: {
+        createUser(_, args) {
+            USERS.push(args.userInput)
+            return args.userInput
         }
     }
-    //Mutation
-    //Subscription
+
 }
 
 //deployment : parsing ,binding

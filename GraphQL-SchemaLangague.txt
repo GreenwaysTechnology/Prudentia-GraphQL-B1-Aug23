@@ -1290,6 +1290,443 @@ Here we get null value in the address, because the data set is not linked .
 Resolver chain means coimbin results of one resolver with in nested resolver.
 
 
+import { ApolloServer } from "@apollo/server"
+import { startStandaloneServer } from '@apollo/server/standalone'
+
+
+//mock data:
+const USERS = [{
+    id: 1,
+    name: 'A',
+    email: 'a@gmail.com'
+},
+{
+    id: 2,
+    name: 'B',
+    email: 'b@gmail.com'
+},
+{
+    id: 3,
+    name: 'C',
+    email: 'c@gmail.com'
+}
+]
+const ADDRESS = [{
+    city: 'CBE',
+    state: 'TN',
+    id: 1, //linking field  looks like foreign key
+},
+{
+    city: 'BNG',
+    state: 'KA',
+    id: 2, //linking field  looks like foreign key
+},
+{
+    city: 'HYD',
+    state: 'TS',
+    id: 3, //linking field  looks like foreign key
+}
+]
+
+//define schema
+const typeDefs = `
+type Address {
+  city:String
+}
+
+type User {
+ id:ID
+ name:String
+ email:String
+ address:Address
+}
+
+type Query {
+  users:[User]
+}
+`
+
+//define resolver
+const resolvers = {
+    //Query
+    Query: {
+        users() {
+            return USERS
+        }
+    },
+    //Resolver Chain
+    User: {
+        address(parent, args, contextValue, info) {
+            console.log(parent)
+            return ADDRESS.find(address => {
+                return address.id === parent.id
+            })
+        }
+    }
+    //Mutation
+    //Subscription
+}
+
+//deployment : parsing ,binding
+const server = new ApolloServer({ typeDefs: typeDefs, resolvers: resolvers })
+
+//start web container
+const { url } = await startStandaloneServer(server, {
+    listen: {
+        port: 4000
+    }
+})
+console.log(`Apollo Server is ready ${url}`)
+
+query Users {
+  users {
+    id
+    name
+    email
+    address {
+      city
+    }
+  }
+}
+{
+  "data": {
+    "users": [
+      {
+        "id": "1",
+        "name": "A",
+        "email": "a@gmail.com",
+        "address": {
+          "city": "CBE"
+        }
+      },
+      {
+        "id": "2",
+        "name": "B",
+        "email": "b@gmail.com",
+        "address": {
+          "city": "BNG"
+        }
+      },
+      {
+        "id": "3",
+        "name": "C",
+        "email": "c@gmail.com",
+        "address": {
+          "city": "HYD"
+        }
+      }
+    ]
+  }
+}
+....................................................................................
+			  Cardinality Relationship
+....................................................................................
+
+Many to Many : Many users. Each User can have Many address
+
+
+import { ApolloServer } from "@apollo/server"
+import { startStandaloneServer } from '@apollo/server/standalone'
+
+
+//mock data:
+const USERS = [{
+    id: 1,
+    name: 'A',
+    email: 'a@gmail.com'
+},
+{
+    id: 2,
+    name: 'B',
+    email: 'b@gmail.com'
+},
+{
+    id: 3,
+    name: 'C',
+    email: 'c@gmail.com'
+}
+]
+const ADDRESS = [{
+    city: 'CBE',
+    state: 'TN',
+    id: 1, //linking field  looks like foreign key
+},
+{
+    city: 'BNG',
+    state: 'KA',
+    id: 1, //linking field  looks like foreign key
+},
+{
+    city: 'BNG',
+    state: 'KA',
+    id: 2, //linking field  looks like foreign key
+},
+{
+    city: 'CBE',
+    state: 'TN',
+    id: 2, //linking field  looks like foreign key
+},
+{
+    city: 'HYD',
+    state: 'TS',
+    id: 3, //linking field  looks like foreign key
+},
+{
+    city: 'DEL',
+    state: 'HR',
+    id: 3, //linking field  looks like foreign key
+}
+]
+
+//define schema
+const typeDefs = `
+type Address {
+  city:String
+}
+
+type User {
+ id:ID
+ name:String
+ email:String
+ address:[Address]
+}
+
+type Query {
+  users:[User]
+}
+`
+
+//define resolver
+const resolvers = {
+    //Query
+    Query: {
+        users() {
+            return USERS
+        }
+    },
+    //Resolver Chain
+    User: {
+        address(parent, args, contextValue, info) {
+            console.log(parent)
+            return ADDRESS.filter(address => {
+                return address.id === parent.id
+            })
+        }
+    }
+    //Mutation
+    //Subscription
+}
+
+//deployment : parsing ,binding
+const server = new ApolloServer({ typeDefs: typeDefs, resolvers: resolvers })
+
+//start web container
+const { url } = await startStandaloneServer(server, {
+    listen: {
+        port: 4000
+    }
+})
+console.log(`Apollo Server is ready ${url}`)
+
+Client:
+query Users {
+  users {
+    id
+    name
+    email
+    address {
+      city      
+    }
+  }
+}
+
+Response:
+{
+  "data": {
+    "users": [
+      {
+        "id": "1",
+        "name": "A",
+        "email": "a@gmail.com",
+        "address": [
+          {
+            "city": "CBE"
+          },
+          {
+            "city": "BNG"
+          }
+        ]
+      },
+      {
+        "id": "2",
+        "name": "B",
+        "email": "b@gmail.com",
+        "address": [
+          {
+            "city": "BNG"
+          },
+          {
+            "city": "CBE"
+          }
+        ]
+      },
+      {
+        "id": "3",
+        "name": "C",
+        "email": "c@gmail.com",
+        "address": [
+          {
+            "city": "HYD"
+          },
+          {
+            "city": "DEL"
+          }
+        ]
+      }
+    ]
+  }
+}
+.....................................................................................
+Lab:
+  One to Many with single User- Parametermized.
+
+.....................................................................................
+			 Mutations
+.....................................................................................
+
+How to send data for insert , update,remove.
+
+import { ApolloServer } from "@apollo/server"
+import { startStandaloneServer } from '@apollo/server/standalone'
+
+
+//mock data:
+const USERS = [{
+    id: 1,
+    name: 'A',
+    email: 'a@gmail.com'
+},
+{
+    id: 2,
+    name: 'B',
+    email: 'b@gmail.com'
+},
+{
+    id: 3,
+    name: 'C',
+    email: 'c@gmail.com'
+}
+]
+
+//define schema
+const typeDefs = `
+
+type User {
+ id:ID
+ name:String
+ email:String
+}
+
+type Query {
+  users:[User]
+}
+
+input CreateUserInput{
+  id:ID
+  name:String
+  email:String
+}
+
+type Mutation{
+    createUser(userInput:CreateUserInput):User
+}
+
+`
+
+//define resolver
+const resolvers = {
+    Query: {
+        users() {
+            return USERS;
+        }
+    },
+    Mutation: {
+        createUser(_, args) {
+            USERS.push(args.userInput)
+            return args.userInput
+        }
+    }
+
+}
+
+//deployment : parsing ,binding
+const server = new ApolloServer({ typeDefs: typeDefs, resolvers: resolvers })
+
+//start web container
+const { url } = await startStandaloneServer(server, {
+    listen: {
+        port: 4000
+    }
+})
+console.log(`Apollo Server is ready ${url}`)
+
+Client Side:
+
+mutation CreateUser($userInput: CreateUserInput) {
+  createUser(userInput: $userInput) {
+    id
+    name
+    email
+  }
+}
+
+{
+  "userInput":{
+    "id":4,
+    "name":"Subramaian",
+    "email":"subu@gmail.com"
+  }
+}
+
+After adding , Test in another window
+
+query Users {
+  users {
+    email
+    id
+    name
+  }
+}
+
+{
+  "data": {
+    "users": [
+      {
+        "email": "a@gmail.com",
+        "id": "1",
+        "name": "A"
+      },
+      {
+        "email": "b@gmail.com",
+        "id": "2",
+        "name": "B"
+      },
+      {
+        "email": "c@gmail.com",
+        "id": "3",
+        "name": "C"
+      },
+      {
+        "email": "subu@gmail.com",
+        "id": "4",
+        "name": "Subramaian"
+      },
+]
+
+
+
+
+
 
 
 
