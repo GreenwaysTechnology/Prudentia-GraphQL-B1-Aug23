@@ -27,26 +27,11 @@ const ADDRESS = [{
 {
     city: 'BNG',
     state: 'KA',
-    id: 1, //linking field  looks like foreign key
-},
-{
-    city: 'BNG',
-    state: 'KA',
-    id: 2, //linking field  looks like foreign key
-},
-{
-    city: 'CBE',
-    state: 'TN',
     id: 2, //linking field  looks like foreign key
 },
 {
     city: 'HYD',
     state: 'TS',
-    id: 3, //linking field  looks like foreign key
-},
-{
-    city: 'DEL',
-    state: 'HR',
     id: 3, //linking field  looks like foreign key
 }
 ]
@@ -61,7 +46,7 @@ type User {
  id:ID
  name:String
  email:String
- address:[Address]
+ address:Address
 }
 
 type Query {
@@ -81,7 +66,7 @@ const resolvers = {
     User: {
         address(parent, args, contextValue, info) {
             console.log(parent)
-            return ADDRESS.filter(address => {
+            return ADDRESS.find(address => {
                 return address.id === parent.id
             })
         }

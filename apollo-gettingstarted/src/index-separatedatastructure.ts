@@ -1,9 +1,14 @@
 import { ApolloServer } from "@apollo/server"
 import { startStandaloneServer } from '@apollo/server/standalone'
 
+class User {
+    id: number
+    name: string
+    email: string
+}
 
 //mock data:
-const USERS = [{
+const USERS: Array<User> = [{
     id: 1,
     name: 'A',
     email: 'a@gmail.com'
@@ -27,29 +32,17 @@ const ADDRESS = [{
 {
     city: 'BNG',
     state: 'KA',
-    id: 1, //linking field  looks like foreign key
-},
-{
-    city: 'BNG',
-    state: 'KA',
-    id: 2, //linking field  looks like foreign key
-},
-{
-    city: 'CBE',
-    state: 'TN',
     id: 2, //linking field  looks like foreign key
 },
 {
     city: 'HYD',
     state: 'TS',
-    id: 3, //linking field  looks like foreign key
-},
-{
-    city: 'DEL',
-    state: 'HR',
-    id: 3, //linking field  looks like foreign key
+    id: 1, //linking field  looks like foreign key
 }
 ]
+
+
+
 
 //define schema
 const typeDefs = `
@@ -61,7 +54,7 @@ type User {
  id:ID
  name:String
  email:String
- address:[Address]
+ address:Address
 }
 
 type Query {
@@ -73,17 +66,8 @@ type Query {
 const resolvers = {
     //Query
     Query: {
-        users() {
+        users(): Array<User> {
             return USERS
-        }
-    },
-    //Resolver Chain
-    User: {
-        address(parent, args, contextValue, info) {
-            console.log(parent)
-            return ADDRESS.filter(address => {
-                return address.id === parent.id
-            })
         }
     }
     //Mutation
