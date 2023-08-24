@@ -2232,25 +2232,484 @@ Response:
     "hello": "Hello Subramanian"
   }
 }
+.....................................................................................
+			 Data Sources & Context
+....................................................................................
 
 
+import { ApolloServer } from "@apollo/server"
+import { startStandaloneServer } from '@apollo/server/standalone'
 
 
+//define schema
+const typeDefs = `
+type Book {
+  title:String
+  author:String
+}
+
+type Query {
+    books:[Book]
+}
+`
+const Books = [{
+    title: 'GraphQl in Action',
+    author: 'A',
+
+},
+{
+    title: 'Apollo in Action',
+    author: 'B',
+
+},
+{
+    title: 'Typescript in Action',
+    author: 'C',
+
+}
+
+]
+
+// datasource class
+export class BookDataSource {
+    //api 
+    getBooks() {
+        return Books
+    }
+    //getBooksById
+
+    //save
+
+    //update
+
+    //remove
+
+}
+
+//define Context type:For type Script
 
 
+//define resolver
+const resolvers = {
+    Query: {
+        // books(parent, args, contextValue) {
+        //     return contextValue.dataSources.booksAPI.getBooks()
+        // }
+        books(parent, args, contextValue) {
+            const { dataSources: { booksAPI: { getBooks } } } = contextValue
+            return getBooks()
+        }
+    }
+}
+
+interface MyContext {
+    dataSources: {
+        booksAPI: BookDataSource
+    }
+}
+//deployment : parsing ,binding
+const server = new ApolloServer<MyContext>({ typeDefs: typeDefs, resolvers: resolvers })
+
+//start web container
+const { url } = await startStandaloneServer(server, {
+    listen: {
+        port: 4000
+    },
+    context: async ({ req, res }) => {
+        return {
+            dataSources: {
+                booksAPI: new BookDataSource()
+            }
+        }
+    }
+})
+console.log(`Apollo Server is ready ${url}`)
 
 
+Client:
+query Books {
+  books {
+    author
+    title
+  }
+}
+
+Response:
+{
+  "data": {
+    "books": [
+      {
+        "author": "A",
+        "title": "GraphQl in Action"
+      },
+      {
+        "author": "B",
+        "title": "Apollo in Action"
+      },
+      {
+        "author": "C",
+        "title": "Typescript in Action"
+      }
+    ]
+  }
+}
+.....................................................................................
+			 External DataSources,Context
+.....................................................................................
+
+Data Sources:
+1.Rest
+2.Database
+
+REST As Back End:
+
+Steps:
+
+1.Setup local Rest api
+
+E:\session\Prudentia>mkdir myapiserver
+
+E:\session\Prudentia>cd myapiserver
+
+E:\session\Prudentia\myapiserver>npm install -g json-server
+
+............
+
+2.create db.json file the project dir
+{
+    "books": [
+        {
+            "title": "GraphQl in Action",
+            "author": "A"
+        },
+        {
+            "title": "Apollo in Action",
+            "author": "B"
+        },
+        {
+            "title": "Typescript in Action",
+            "author": "C"
+        }
+    ]
+}
+3.Start Rest api server
+E:\session\Prudentia\myapiserver>json-server --watch db.json
+.....................................................................................
+Graphql Setup:
+..............
+
+Steps:
+ 
+1.Create Service/API class in order to communicate REST api.
+ Apollo Provides a special wrapper class to connect to rest apis.
+
+npm install @apollo/datasource-rest --save
+
+2.Declare Your own class and extends "RESTDataSource" superclass
+
+3.Write typedef, resolver
+
+eg:
+import { RESTDataSource } from "@apollo/datasource-rest";
+import { ApolloServer } from "@apollo/server"
+import { startStandaloneServer } from '@apollo/server/standalone'
 
 
+//Type class
+export class Book {
+    title: string
+    author: string
+}
+//Data Source class
+export class BooksAPI extends RESTDataSource {
+    constructor() {
+        super()
+        //base url
+        this.baseURL = "http://localhost:3000/"
+    }
+    //apis 
+    async getBooks() {
+        return this.get<Book[]>(`books`)
+    }
+    //post
+
+    //update
+
+    //delete
+}
+
+//define schema
+const typeDefs = `
+type Book {
+  title:String
+  author:String
+}
+
+type Query {
+    books:[Book]
+}
+`
+
+//define resolver
+const resolvers = {
+    Query: {
+        async books(parent, args, contextValue) {
+            return contextValue.dataSources.booksAPI.getBooks()
+        }
+    }
+}
+interface MyContext {
+    dataSources: {
+        booksAPI: BooksAPI
+    }
+}
+//deployment : parsing ,binding
+const server = new ApolloServer<MyContext>({ typeDefs: typeDefs, resolvers: resolvers })
+
+//start web container
+const { url } = await startStandaloneServer(server, {
+    listen: {
+        port: 4000
+    },
+    context: async ({ req, res }) => {
+        return {
+            dataSources: {
+                booksAPI: new BooksAPI()
+            }
+        }
+    }
+})
+console.log(`Apollo Server is ready ${url}`)
+
+Client:
+query Books {
+  books {
+    title
+    author
+  }
+}
+{
+  "data": {
+    "books": [
+      {
+        "title": "GraphQl in Action",
+        "author": "A"
+      },
+      {
+        "title": "Apollo in Action",
+        "author": "B"
+      },
+      {
+        "title": "Rest in Action",
+        "author": "C"
+      },
+      {
+        "title": "Typescript in Action",
+        "author": "D"
+      }
+    ]
+  }
+}
+.....................................................................................
+			 Mutation : Post and Update
+....................................................................................
+
+import { RESTDataSource } from "@apollo/datasource-rest";
+import { ApolloServer } from "@apollo/server"
+import { startStandaloneServer } from '@apollo/server/standalone'
 
 
+//Type class
+export class Book {
+    id?: number
+    title?: string
+    author?: string
+}
+export class MutationResponse {
+    status: string
+    data?: string
+}
+
+//Data Source class
+export class BooksAPI extends RESTDataSource {
+    constructor() {
+        super()
+        //base url
+        this.baseURL = "http://localhost:3000/"
+    }
+    //apis 
+    async getBooks() {
+        return this.get<Book[]>(`books`)
+    }
+    async book(id: number) {
+        return this.get<Book>(`books/${id}`)
+    }
+    //post
+    async postBook(book: Book) {
+        return this.post<Book>(`books`, { body: book }).then(res => res)
+    }
+    //update
+    async updateBook(bookId: number, book: Book) {
+        return this.put<Book>(`books/${bookId}`, { body: book }).then(res => res)
+    }
+    //delete
+
+}
+
+//define schema
+const typeDefs = `
+type Book {
+  id:Int
+  title:String
+  author:String
+}
+
+type Query {
+    books:[Book!]!
+    book(id:Int!):Book
+}
+input BookInput{
+    id:Int!
+    title:String!
+    author:String!
+}
+input BookUpdateInput {
+    title:String!
+    author:String!
+}
+
+type Mutation{ 
+    addBook(input:BookInput):Book
+    updateBook(id:Int!,input:BookUpdateInput):Book
+}
+`
+
+//define resolver
+const resolvers = {
+    Query: {
+        async books(parent, args, contextValue) {
+            return contextValue.dataSources.booksAPI.getBooks()
+        },
+        async book(parent, args, contextValue) {
+            const { dataSources } = contextValue;
+            const id = +args.id
+            return dataSources.booksAPI.book(id)
+        }
+    },
+    Mutation: {
+        async addBook(parent, args, contextValue, info) {
+            const { input } = args
+            const { dataSources } = contextValue
+            return dataSources.booksAPI.postBook(input)
+        },
+        async updateBook(parent, args, contextValue, info) {
+            const { input, id } = args
+            const { dataSources } = contextValue
+            return dataSources.booksAPI.updateBook(id, input)
+        }
+    }
+}
+interface MyContext {
+    dataSources: {
+        booksAPI: BooksAPI
+    }
+}
+//deployment : parsing ,binding
+const server = new ApolloServer<MyContext>({ typeDefs: typeDefs, resolvers: resolvers })
+
+//start web container
+const { url } = await startStandaloneServer(server, {
+    listen: {
+        port: 4000
+    },
+    context: async ({ req, res }) => {
+        return {
+            dataSources: {
+                booksAPI: new BooksAPI()
+            }
+        }
+    }
+})
+console.log(`Apollo Server is ready ${url}`)
 
 
+Changes in db.json
+{
+    "books": [
+        {
+            "id": 1,
+            "title": "GraphQl in Action",
+            "author": "A"
+        },
+        {
+            "id": 2,
+            "title": "Apollo in Action",
+            "author": "B"
+        },
+        {
+            "id": 3,
+            "title": "Rest in Action",
+            "author": "C"
+        },
+        {
+            "id": 4,
+            "title": "Typescript in Action",
+            "author": "D"
+        }
+    ]
+}
 
+Client:
 
+Get All books:
 
+query Books {
+  books {
+    author
+    id
+    title
+  }
+}
 
+GetBooksById
+query Books($bookId: Int!) {
+  book(id: $bookId) {
+      id
+      title
+      author
+  }
+}
 
+Save:
+mutation SaveBook($input:BookInput) {
+   addBook(input:$input) {
+     author
+     id
+     
+   }
+}
+variables:
+{
+  "input": {
+    "id": 100,
+    "title": "Graphql with rest",
+    "author": "Subramanian"
+  }
+}
 
+Update:
+mutation UpdateBook($updateBookId: Int!, $input: BookUpdateInput) {
+  updateBook(id: $updateBookId, input: $input) {
+    title
+  }
+}
+Variables
+{
+  "updateBookId": 4,
+  "input" : {
+    "title": "Graphql with db",
+    "author": "Subramanian"
+  }
+}
 
 

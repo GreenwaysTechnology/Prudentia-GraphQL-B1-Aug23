@@ -1,0 +1,29 @@
+{
+  "books": [
+    {
+      "id": 1,
+      "title": "GraphQl in Action",
+      "author": "A"
+    },
+    {
+      "id": 2,
+      "title": "Apollo in Action",
+      "author": "B"
+    },
+    {
+      "id": 3,
+      "title": "Rest in Action",
+      "author": "C"
+    },
+    {
+      "title": "Graphql with db",
+      "author": "Subramanian",
+      "id": 4
+    },
+    {
+      "id": 100,
+      "title": "Graphql with rest",
+      "author": "Subramanian"
+    }
+  ]
+}
