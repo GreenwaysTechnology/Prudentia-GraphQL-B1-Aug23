@@ -2711,5 +2711,576 @@ Variables
     "author": "Subramanian"
   }
 }
+.....................................................................................
+				 Data base Integration
+
+
+1.setup database
+2.ORM framework-Prisma
+3.Define schema
+4.Define resolvers
+
+
+1.setup database.
+docker-compose.yml
+version: '3.8'
+services:
+  postgres:
+    image: postgres:13
+    restart: always
+    environment:
+      - POSTGRES_USER=db_user
+      - POSTGRES_PASSWORD=db_password
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+volumes:
+  postgres:
+
+E:\session\Prudentia\apollo-gettingstarted>docker-compose up
+
+
+install prisma :
+npm install prisma typescript ts-node @types/node --save-dev
+
+
+Prisma Setup:
+
+npx prisma init
+
+npx prisma init
+
+✔ Your Prisma schema was created at prisma/schema.prisma
+  You can now open it in your favorite editor.
+
+Next steps:
+1. Set the DATABASE_URL in the .env file to point to your existing database. If your database has no tables yet, read https://pris.ly/d/getting-started
+2. Set the provider of the datasource block in schema.prisma to match your database: postgresql, mysql, sqlite, sqlserver, mongodb or cockroachdb.
+3. Run prisma db pull to turn your database schema into a Prisma schema.
+4. Run prisma generate to generate the Prisma Client. You can then start querying your database.
+
+More information in our documentation:
+https://pris.ly/d/getting-started
+
+Database Migration:
+  Inside schema file we need to declare , models,entities
+
+schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  email     String   @unique
+  name      String?
+}
+
+Create tables in the database.
+
+npx prisma migrate dev
+
+After running this command the tables have been created.
+.....................................................................................
+
+Setup Prisma client , so that we can use apis
+
+src/database.ts
+import { PrismaClient } from "@prisma/client";
+
+export const prisma = new PrismaClient()
+
+
+
+import { ApolloServer } from "@apollo/server"
+import { startStandaloneServer } from '@apollo/server/standalone'
+import { PrismaClient } from '@prisma/client'
+import { prisma } from "./db.js"
+
+//define schema
+const typeDefs = `
+ type User {
+    id:Int
+    email:String
+    name:String
+    createdAt:String
+ }
+ input UserInput {
+    email:String
+    name:String
+ }
+ type Query {
+    users:[User]
+ }
+ type Mutation {
+    createUser(user:UserInput):User
+ }
+
+`
+
+interface MyContext {
+    dataSources: {
+        db: PrismaClient
+    }
+}
+
+//define resolver
+const resolvers = {
+    Query: {
+        async users(_, args, context) {
+            return await context.dataSources.db.user.findMany({})
+        }
+    },
+    Mutation: {
+        async createUser(parent, args, context, info) {
+            const { user } = args
+            return context.dataSources.db.user.create({
+                data: {
+                    name: user.name,
+                    email: user.email,
+                    createdAt: new Date()
+                }
+            })
+        }
+    }
+
+}
+
+//deployment : parsing ,binding
+const server = new ApolloServer<MyContext>({ typeDefs: typeDefs, resolvers: resolvers })
+
+//start web container
+const { url } = await startStandaloneServer(server, {
+    listen: {
+        port: 4000
+    },
+    context: async ({ req, res }) => {
+
+        return {
+            dataSources: {
+                db: prisma
+            }
+        }
+    }
+})
+console.log(`Apollo Server is ready ${url}`)
+
+Get:
+query Users {
+  users {
+    name
+    id
+    email
+    createdAt
+  }
+}
+Save:
+mutation saveUser($input: UserInput) {
+  createUser(user: $input) {
+    id
+    name
+    email
+  }
+}
+Variables:
+{
+  "input": {
+    "name":"Murugan",
+    "email":"murugan@hotmail.com"
+  }
+}
+....................................................................................
+			   HTTP headers 
+
+1.Request Headers
+2.Custom Headers
+3.Auth headers
+
+Since Apollo server is running on the top of Express server, so we can all express atributes
+  context: async (object) => {
+        console.log(object)
+        return {
+            message: 'Hello'
+        }
+    }
+
+object has request and response
+
+request which points request object and response which points response object.
+
+import { ApolloServer } from "@apollo/server"
+import { startStandaloneServer } from '@apollo/server/standalone'
+import { request } from "http"
+
+//define Context type:For type Script
+interface MyContext {
+    message: String
+}
+
+//define schema
+const typeDefs = `
+
+type Query {
+    hello(name:String!):String!
+}
+`
+
+//define resolver
+const resolvers = {
+    Query: {
+        hello(_, args, contextValue) {
+            return `${contextValue.message} ${args.name}`
+        }
+    }
+}
+
+//deployment : parsing ,binding
+const server = new ApolloServer<MyContext>({ typeDefs: typeDefs, resolvers: resolvers })
+
+//start web container
+const { url } = await startStandaloneServer(server, {
+    listen: {
+        port: 4000
+    },
+    context: async ({ req, res }) => {
+        //console.log(req.headers)
+        console.log(req.headers.authorization)
+        const token = req.headers.authorization
+        return {
+            message: token.toString()
+        }
+    }
+})
+console.log(`Apollo Server is ready ${url}`)
+.....................................................................................
+			  Interfaces
+.....................................................................................
+An Interface provides  program to super type approach similar abstract classes
+
+"An Interface provides set of fields that multiple objects they can include"
+
+type Query {
+  myQuery:InterfaceType
+}
+
+import { ApolloServer } from "@apollo/server"
+import { startStandaloneServer } from "@apollo/server/standalone"
+
+//Define Schema
+const typeDefs = `
+interface Book {
+    title: String!
+    author: Author!
+}
+  
+type Course {
+    name:String
+}
+type Author {
+    name:String
+}
+type Textbook implements Book {
+    title: String!
+    author: Author!
+    courses: [Course!]!
+}
+type ColoringBook implements Book {
+    title: String!
+    author: Author!
+    colors: [String!]!
+}
+  
+type Query {
+  books: [Book!]!
+}
+ `
+
+// const BOOKS = [{
+//     title: 'Graphql',
+//     author: {
+//         name:'Subramnaian Murugan'
+//     },
+//     courses: [{
+//         name: 'IT'
+//     }]
+// }]
+const BOOKS = [{
+    title: 'Graphql',
+    author: {
+        name:'Geetha Subramanian'
+    },
+    colors:['Green'] 
+}]
+//Define Resolver
+const resolvers = {
+
+    //Query
+    Query: {
+        books() {
+            return BOOKS;
+        }
+    },
+    Book: {
+        __resolveType(book, contextValue, info) {
+            console.log(book)
+            if (book.courses) {
+                return 'Textbook' //must return Implementaton type in String
+            }
+            if (book.colors) {
+                return 'ColoringBook'
+            }
+            return null
+        }
+    }
+
+
+}
+
+const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+})
+//start the webserver and deploy
+const { url } = await startStandaloneServer(server, {
+    listen: {
+        port: 4000
+    }
+})
+console.log(`Apollo Server is Ready at ${url}`)
+
+
+
+Client side:
+query getBooks {
+  books {
+    __typename
+    title
+    ... on Textbook {
+      courses {
+        name
+        
+      }
+    }
+    ... on ColoringBook {
+      colors
+    }
+    author {
+      name
+    }
+  }
+}
+
+Response:
+{
+  "data": {
+    "books": [
+      {
+        "__typename": "ColoringBook",
+        "title": "Graphql",
+        "colors": [
+          "Green"
+        ],
+        "author": {
+          "name": "Geetha Subramanian"
+        }
+      }
+    ]
+  }
+}
+
+
+...................................................................................
+			   React as Client for Graphql
+....................................................................................
+
+1.create react project.
+
+npx create-react-app graphql-reactclient
+cd graphql-reactclient
+npm start
+
+
+2.install react-graphql dependencies
+
+npm install @apollo/client graphql
+
+3.Initalize ApolloClient
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import { ApolloClient, InMemoryCache, ApolloProvider, gql } from '@apollo/client';
+
+
+//create Client 
+const client = new ApolloClient({
+  uri: 'http://localhost:4000/',
+  cache: new InMemoryCache()
+})
+
+//Query 
+client.query({
+  query: gql`
+    query Query {
+        hello
+    }
+   `
+}).then(res => console.log(res.data))
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+..................................................................................
+Apollo Provider:
+................
+
+ Used to access data with in compoent.
+
+root.render(<ApolloProvider client={client}>
+    <App />
+</ApolloProvider>
+);
+
+Fetch data with useQuery
+
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import reportWebVitals from './reportWebVitals';
+import { ApolloClient, useQuery, InMemoryCache, ApolloProvider, gql } from '@apollo/client';
+
+
+//create Client 
+const client = new ApolloClient({
+    uri: 'http://localhost:4000/',
+    cache: new InMemoryCache()
+})
+
+//Query 
+// client.query({
+//     query: gql`
+//     query Query {
+//         hello
+//     }
+//    `
+// }).then(res => console.log(res.data))
+
+const GET_HELLO = gql`
+query HelloQuery {
+     hello
+}
+`
+const App = () => {
+    const { loading, error, data } = useQuery(GET_HELLO)
+    console.log(data)
+    if (loading) {
+        return <h1>Loading....</h1>
+    }
+    if(error){
+        return <h1>Something went wrong</h1>
+    }
+    return <>
+        <h1>{data.hello}</h1>
+    </>
+}
+
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<ApolloProvider client={client}>
+        <App />
+    </ApolloProvider>
+    );
+......................
+
+Gettings user from graphql 
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import reportWebVitals from './reportWebVitals';
+import { ApolloClient, useQuery, InMemoryCache, ApolloProvider, gql } from '@apollo/client';
+
+
+//create Client 
+const client = new ApolloClient({
+    uri: 'http://localhost:4000/',
+    cache: new InMemoryCache()
+})
+
+//Query 
+// client.query({
+//     query: gql`
+//     query Query {
+//         hello
+//     }
+//    `
+// }).then(res => console.log(res.data))
+
+const GET_USERS = gql`
+query USERS_QUERY {
+  users {
+    createdAt
+    email
+    id
+    name
+  }
+}
+
+`
+const App = () => {
+    const { loading, error, data } = useQuery(GET_USERS)
+    console.log(data)
+    if (loading) {
+        return <h1>Loading....</h1>
+    }
+    if (error) {
+        return <h1>Something went wrong</h1>
+    }
+    return <>
+        <ul>
+            {data.users.map(user => {
+                return <li>{user.name} {user.email}</li>
+            })}
+        </ul>
+    </>
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<ApolloProvider client={client}>
+    <App />
+</ApolloProvider>
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
