@@ -1,0 +1,2 @@
+https://www.apollographql.com/docs/apollo-server/security/authentication/
+https://www.youtube.com/watch?v=dBuU61ABEDs
